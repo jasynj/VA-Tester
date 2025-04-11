@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vision_test.db'
 db = SQLAlchemy(app)
-CORS(app)
+CORS(app, supports_credentials=True)
 
 # ==================== MODELS ====================
 # Data base

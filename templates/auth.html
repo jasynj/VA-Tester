@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vision Test - Auth</title>
+    <link rel="stylesheet" href="auth.css" />
+  </head>
+  <body>
+    <div class="background"></div>
+    <div class="theme-toggle" onclick="toggleTheme()">🌗</div>
+    <div class="container">
+      <!-- Signup Form -->
+      <form id="signup-form">
+        <h2>Signup</h2>
+        <input type="email" id="signup-email" placeholder="Email" required>
+        <input type="password" id="signup-password" placeholder="Password" required>
+        <button type="submit">Create Account</button>
+      </form>
+
+      <!-- Login Form (initially hidden) -->
+      <form id="login-form" class="hidden">
+        <h2>Login</h2>
+        <input type="email" id="login-email" placeholder="Email" required>
+        <input type="password" id="login-password" placeholder="Password" required>
+        <button type="submit">Log In</button>
+      </form>
+
+      <!-- Toggle Button -->
+      <button type="button" class="toggle-link" onclick="toggleForms()">
+        Already have an account? Log In
+      </button>
+    </div>
+    <script src="auth.js"></script>
+  </body>
+  </html>
