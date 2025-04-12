@@ -1,8 +1,8 @@
 :root {
-  --primary-color: #4e54c8;
-  --secondary-color: #8f94fb;
-  --accent-color: #43e97b;
-  --accent-color-2: #38f9d7;
+  --primary-color:rgb(12, 205, 239);
+  --secondary-color:rgb(143, 197, 251);
+  --accent-color:rgb(58, 252, 239);
+  --accent-color-2:rgb(17, 231, 191);
   --error-color: #ff6b6b;
   --bg-dark: #1e1e2f;
   --text-light: #f9f9f9;
@@ -50,6 +50,12 @@ body {
   position: relative;
   z-index: 2;
   text-align: center;
+}
+
+.logo {
+  width: 100px;
+  height: auto;
+  margin-bottom: 0px;
 }
 
 h2 {

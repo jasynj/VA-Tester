@@ -9,37 +9,48 @@ function toggleForms() {
   const loginForm = document.getElementById("login-form");
   const toggleLink = document.querySelector(".toggle-link");
 
-  if (signupForm.classList.contains("hidden")) {
+  if (loginForm.classList.contains("hidden")) {
     // Switch to signup form
+    loginForm.classList.remove("hidden");
+    signupForm.classList.add("hidden");
+    toggleLink.textContent = "Don't have an account? Sign Up";
+  } 
+  else {
+    // Switch to login form
     signupForm.classList.remove("hidden");
     loginForm.classList.add("hidden");
     toggleLink.textContent = "Already have an account? Log In";
-  } else {
-    // Switch to login form
-    signupForm.classList.add("hidden");
-    loginForm.classList.remove("hidden");
-    toggleLink.textContent = "Don't have an account? Sign Up";
+
   }
 }
 
 // Signup function
 function signupUser(e) {
   e.preventDefault();
-  const email = document.getElementById("signup-email").value.trim();
-  const password = document.getElementById("signup-password").value.trim();
 
-  if (!email || !password) {
-    alert("Please provide email and password.");
+  const firstName = document.getElementById("firstName").value.trim();
+  const lastName = document.getElementById("lastName").value.trim();
+  const dob = document.getElementById("dob").value.trim();
+  const email = document.getElementById("signupEmail").value.trim();
+  const password = document.getElementById("signupPassword").value.trim();
+
+  if (!firstName || !lastName || !dob || !email || !password) {
+    alert("Please fill out all the fields.");
     return;
   }
+
   fetch('http://127.0.0.1:5000/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({
+      firstName,
+      lastName,
+      dob,
+      email,
+      password
+    })
   })
-  
-  
   .then(response => {
     if (response.ok) {
       return response.json();
@@ -55,6 +66,7 @@ function signupUser(e) {
     alert("Signup failed: " + err.message);
   });
 }
+
 
 // Login function
 function loginUser(e) {
