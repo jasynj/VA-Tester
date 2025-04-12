@@ -1,6 +1,6 @@
 body {
   font-family: Arial, sans-serif;
-  background-color: #e6f2ff;
+  background-color: #c4ecf6;
   color: #333;
   display: flex;
   flex-direction: column;
@@ -8,6 +8,13 @@ body {
   justify-content: center;
   height: 100vh;
 }
+
+.logo {
+  width: 80px;
+  height: auto;
+  margin-bottom: 20px;
+}
+
 form {
   background: white;
   padding: 20px;

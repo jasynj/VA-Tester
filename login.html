@@ -1,26 +1,17 @@
+<!-- login.html -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vision Test - Auth</title>
+    <title>Login | Vision Test</title>
+    <link rel="icon" type="image/webp" href="logo(1).png" />
     <link rel="stylesheet" href="auth.css" />
-    <link rel="stylesheet" href="auth.js" />
+    <script src="login.js" defer></script>
   </head>
   <body>
-    <h2>Signup</h2>
-    <form id="signupForm">
-      <input type="email" placeholder="Email" id="signupEmail" required />
-      <input
-        type="password"
-        placeholder="Password"
-        id="signupPassword"
-        required
-      />
-      <button type="submit">Sign Up</button>
-    </form>
-
-    <h2>Login</h2>
+    <img src="logo(1).png" alt="Vision Test Logo" class="logo" />
+    <h2>Welcome Back</h2>
     <form id="loginForm">
       <input type="email" placeholder="Email" id="loginEmail" required />
       <input
@@ -31,5 +22,6 @@
       />
       <button type="submit">Login</button>
     </form>
+    <p>New user? <a href="signup.html">Sign up here</a></p>
   </body>
 </html>
