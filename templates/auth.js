@@ -1,8 +1,3 @@
-// Toggle between dark and light themes (if needed)
-function toggleTheme() {
-  document.body.classList.toggle("dark-mode");
-}
-
 // Toggle between the signup and login forms
 function toggleForms() {
   const signupForm = document.getElementById("signup-form");
@@ -23,6 +18,7 @@ function toggleForms() {
 
   }
 }
+
 
 // Signup function
 function signupUser(e) {
@@ -95,11 +91,13 @@ function loginUser(e) {
   .then(data => {
     alert(data.message);
     // Optionally, redirect or fetch additional user data here
+    window.location.href = "http://127.0.0.1:5000/dashboard";
   })
   .catch(err => {
     alert("Login failed: " + err.message);
   });
 }
+
 
 // Attach event listeners to handle form submissions
 document.getElementById("signup-form").addEventListener("submit", signupUser);
