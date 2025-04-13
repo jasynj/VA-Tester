@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vision Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <header class="top-bar">
+    <div class="logo">👁️ VisionCare</div>
+    <nav>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/start-test">Take Test</a>
+      <a href="/logout">Logout</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-text">
+      <h1>Welcome, {{ user.first_name }}</h1>
+      <p>Ready to check your vision today?</p>
+      <a href="/start-test" class="btn-primary">Start New Vision Test</a>
+    </div>
+    <div class="hero-image">
+      <img src="https://images.unsplash.com/photo-1588776814546-cf1e6f24a28e?auto=format&fit=crop&w=800&q=80" alt="Eye Care" />
+    </div>
+  </section>
+
+  <section class="dashboard-cards">
+    <div class="card">
+      <h2>🧪 Your Test History</h2>
+      {% if test_results %}
+        <ul>
+          {% for result in test_results %}
+            <li><strong>{{ result.date }}</strong> — {{ result.result }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>No vision tests yet. Start your first one now!</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2>👁 Recommendations</h2>
+      {% if recommendations %}
+        <ul>
+          {% for tip in recommendations %}
+            <li>{{ tip }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>No recommendations yet. Take a test to get feedback!</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 VisionCare | Helping you see better, every day.</p>
+  </footer>
+</body>
+</html>
