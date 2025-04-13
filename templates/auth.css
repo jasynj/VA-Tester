@@ -1,8 +1,8 @@
 :root {
-  --primary-color:rgb(12, 205, 239);
-  --secondary-color:rgb(143, 197, 251);
-  --accent-color:rgb(58, 252, 239);
-  --accent-color-2:rgb(17, 231, 191);
+  --primary-color: rgb(12, 205, 239);
+  --secondary-color: rgb(143, 197, 251);
+  --accent-color: rgb(58, 252, 239);
+  --accent-color-2: rgb(17, 231, 191);
   --error-color: #ff6b6b;
   --bg-dark: #1e1e2f;
   --text-light: #f9f9f9;
@@ -13,8 +13,12 @@
 /* Global body styles */
 body {
   margin: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(
+    135deg,
+    var(--primary-color),
+    var(--secondary-color)
+  );
   color: var(--text-light);
   display: flex;
   align-items: center;
@@ -32,7 +36,7 @@ body {
   height: 100%;
   top: 0;
   left: 0;
-  background: url('https://source.unsplash.com/1600x900/?technology,futuristic');
+  background: url("https://source.unsplash.com/1600x900/?technology,futuristic");
   background-size: cover;
   filter: blur(10px);
   z-index: -1;
@@ -67,7 +71,7 @@ h2 {
 }
 
 input {
-  width: 100%;
+  width: 90%;
   padding: 12px;
   margin: 10px 0;
   border: none;
@@ -92,7 +96,11 @@ button {
   border-radius: 10px;
   font-size: 16px;
   font-weight: bold;
-  background: linear-gradient(to right, var(--accent-color), var(--accent-color-2));
+  background: linear-gradient(
+    to right,
+    var(--accent-color),
+    var(--accent-color-2)
+  );
   color: white;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.3s ease;
@@ -124,13 +132,25 @@ button:hover {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideDown {
-  from { transform: translateY(-20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Hide inactive forms */
