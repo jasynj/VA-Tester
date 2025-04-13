@@ -1,8 +1,10 @@
-from flask import Flask, request, jsonify, session, render_template, redirect, url_for
+from flask import Flask, request, jsonify, session, render_template, redirect, url_for, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
+import qrcode
+import io
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
@@ -52,6 +54,7 @@ def signup():
     db.session.commit()
     return jsonify({'message': 'Signup successful'})
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -87,6 +90,31 @@ def dashboard():
 
     return render_template("dashboard.html", user=user, test_results=test_results, recommendations=recommendations)
 
+
+@app.route('/generate_qr')
+def generate_qr():
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    # Define the test URL (can be customized)
+    test_url = url_for('start_test', _external=True)
+
+    # Generate QR code image
+    qr = qrcode.make(test_url)
+    buffer = io.BytesIO()
+    qr.save(buffer, format='PNG')
+    buffer.seek(0)
+
+    return send_file(buffer, mimetype='image/png')
+
+
+@app.route('/start-test')
+def start_test():
+    if 'user_id' not in session:
+        return redirect('/login')
+    return render_template("start_test.html")  # or however you're handling tests
+
+
 @app.route('/save_result', methods=['POST'])
 def save_result():
     if 'user_id' not in session:
@@ -100,6 +128,7 @@ def save_result():
     db.session.add(result)
     db.session.commit()
     return jsonify({'message': 'Result saved'})
+
 
 @app.route('/my_results', methods=['GET'])
 def my_results():
