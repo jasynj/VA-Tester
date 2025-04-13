@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -52,16 +52,40 @@ def signup():
     db.session.commit()
     return jsonify({'message': 'Signup successful'})
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    data = request.json
-    email = data['email']
-    password = data['password']
-    user = User.query.filter_by(email=email).first()
-    if not user or not check_password_hash(user.password_hash, password):
-        return jsonify({'error': 'Invalid credentials'}), 401
-    session['user_id'] = user.id
-    return jsonify({'message': 'Login successful'})
+    if request.method == 'POST':
+        data = request.get_json()  # if using HTML form submit
+        email = data['email']
+        password = data['password']
+        user = User.query.filter_by(email=email).first()
+        if not user or not check_password_hash(user.password_hash, password):
+            return render_template('login.html', error="Invalid credentials")
+
+        session['user_id'] = user.id
+
+    return jsonify({'message': 'Login successful', 'redirect': '/dashboard'})
+
+
+@app.route('/dashboard')
+def dashboard():
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    user = User.query.get(session['user_id'])
+    test_results = VisionTestResult.query.filter_by(user_id=user.id).order_by(VisionTestResult.date.desc()).all()
+
+    # Example recommendation logic
+    recommendations = []
+    for r in test_results:
+        if "blurry" in r.result.lower():
+            recommendations.append("Your vision seems blurry. Try reducing screen time and consider seeing an optometrist.")
+        elif "mild" in r.result.lower():
+            recommendations.append("Your eyes might be strained. Take regular breaks with the 20-20-20 rule.")
+        elif "perfect" in r.result.lower():
+            recommendations.append("Great vision! Keep up your healthy habits.")
+
+    return render_template("dashboard.html", user=user, test_results=test_results, recommendations=recommendations)
 
 @app.route('/save_result', methods=['POST'])
 def save_result():
@@ -89,6 +113,10 @@ if __name__ == '__main__':
         db.create_all()  # Regenerate the database schema with new fields
     app.run(debug=True)
 
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect('/login')
 
 
 
