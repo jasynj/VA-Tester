@@ -97,7 +97,7 @@ def generate_qr():
         return redirect('/login')
 
     # Define the test URL (can be customized)
-    test_url = url_for('start_test', _external=True)
+    test_url = url_for("start_test", _external=True)
 
     # Generate QR code image
     qr = qrcode.make(test_url)
@@ -137,16 +137,17 @@ def my_results():
     results = VisionTestResult.query.filter_by(user_id=session['user_id']).all()
     return jsonify([{'date': r.date, 'result': r.result} for r in results])
 
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()  # Regenerate the database schema with new fields
-    app.run(debug=True)
 
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
     return redirect('/login')
 
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()  # Regenerate the database schema with new fields
+    app.run(debug=True, host='0.0.0.0',  port=5050)
 
 
 """
