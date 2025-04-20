@@ -19,9 +19,10 @@
 
   <section class="hero">
     <div class="hero-text">
-      <h1>Welcome, {{ user.first_name }}</h1>
-      <p>Ready to check your vision today?</p>
-      <a href="/start-test" class="btn-primary">Start New Vision Test</a>
+        <h1>Welcome, {{ user.first_name }}</h1>
+        <p>Ready to check your vision today?</p>
+        <button onclick="showQR()">Start New Vision Test</button>
+        <img id="qr-code" style="margin-top: 1rem; display: none;" width="200" />
     </div>
     <div class="hero-image">
       <img src="https://images.unsplash.com/photo-1588776814546-cf1e6f24a28e?auto=format&fit=crop&w=800&q=80" alt="Eye Care" />
@@ -59,5 +60,14 @@
   <footer>
     <p>&copy; 2025 VisionCare | Helping you see better, every day.</p>
   </footer>
+
+  <script>
+    function showQR() {
+      const img = document.getElementById("qr-code");
+      img.src = "/generate_qr";
+      img.style.display = "block";
+    }
+  </script>
+  
 </body>
 </html>

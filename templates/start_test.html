@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Start Vision Test</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background:rgb(59, 220, 248);
+      padding: 2rem;
+      text-align: center;
+    }
+    .notice {
+      font-size: 1.3rem;
+      margin-bottom: 2rem;
+    }
+    .status {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #004080;
+    }
+    button {
+      padding: 1rem 2rem;
+      background: #042c54;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Start Your Vision Test 👁️</h1>
+  <p class="notice">
+    Please walk back approximately <strong>10 feet (3 meters)</strong> while holding your phone.<br>
+    We'll alert you when you've reached the correct distance.
+  </p>
+
+  <p class="status" id="status">Waiting for movement...</p>
+  <button onclick="startTracking()">Start</button>
+
+  <script>
+    let totalDistance = 0;
+    let tracking = false;
+    let lastTimestamp = null;
+    let velocity = 0;
+
+    function startTracking() {
+      if (!window.DeviceMotionEvent) {
+        alert("Your device does not support motion tracking.");
+        return;
+      }
+
+      tracking = true;
+      totalDistance = 0;
+      velocity = 0;
+      lastTimestamp = null;
+
+      document.getElementById('status').textContent = "Tracking your movement...";
+
+      window.addEventListener('devicemotion', (event) => {
+        if (!tracking) return;
+
+        const acc = event.accelerationIncludingGravity.z;
+        const timestamp = event.timeStamp;
+
+        if (lastTimestamp !== null && acc !== null) {
+          const dt = (timestamp - lastTimestamp) / 1000;
+          velocity += acc * dt;
+          const displacement = velocity * dt;
+          totalDistance += Math.abs(displacement);
+        }
+
+        lastTimestamp = timestamp;
+
+        if (totalDistance >= 3.0) { // approx 3 meters (10 feet)
+          tracking = false;
+          navigator.vibrate(500);
+          document.getElementById('status').textContent = "✅ Distance reached! Begin test.";
+        }
+      }, true);
+    }
+  </script>
+</body>
+</html>

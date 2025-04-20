@@ -35,7 +35,7 @@ function signupUser(e) {
     return;
   }
 
-  fetch('http://127.0.0.1:5000/signup', {
+  fetch('http://127.0.0.1:5050/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -75,7 +75,7 @@ function loginUser(e) {
     return;
   }
 
-  fetch('http://127.0.0.1:5000/login', {
+  fetch('http://127.0.0.1:5050/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include', // include cookies to maintain session
@@ -91,7 +91,7 @@ function loginUser(e) {
   .then(data => {
     alert(data.message);
     // Optionally, redirect or fetch additional user data here
-    window.location.href = "http://127.0.0.1:5000/dashboard";
+    window.location.href = "http://127.0.0.1:5050/dashboard";
   })
   .catch(err => {
     alert("Login failed: " + err.message);

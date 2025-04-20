@@ -1,8 +1,10 @@
-from flask import Flask, request, jsonify, session, render_template, redirect, url_for
+from flask import Flask, request, jsonify, session, render_template, redirect, url_for, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
+import qrcode
+import io
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
@@ -52,6 +54,7 @@ def signup():
     db.session.commit()
     return jsonify({'message': 'Signup successful'})
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -87,6 +90,31 @@ def dashboard():
 
     return render_template("dashboard.html", user=user, test_results=test_results, recommendations=recommendations)
 
+
+@app.route('/generate_qr')
+def generate_qr():
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    # Define the test URL (can be customized)
+    test_url = url_for("start_test", _external=True)
+
+    # Generate QR code image
+    qr = qrcode.make(test_url)
+    buffer = io.BytesIO()
+    qr.save(buffer, format='PNG')
+    buffer.seek(0)
+
+    return send_file(buffer, mimetype='image/png')
+
+
+@app.route('/start-test')
+def start_test():
+    if 'user_id' not in session:
+        return redirect('/login')
+    return render_template("start_test.html")  # or however you're handling tests
+
+
 @app.route('/save_result', methods=['POST'])
 def save_result():
     if 'user_id' not in session:
@@ -101,6 +129,7 @@ def save_result():
     db.session.commit()
     return jsonify({'message': 'Result saved'})
 
+
 @app.route('/my_results', methods=['GET'])
 def my_results():
     if 'user_id' not in session:
@@ -108,16 +137,17 @@ def my_results():
     results = VisionTestResult.query.filter_by(user_id=session['user_id']).all()
     return jsonify([{'date': r.date, 'result': r.result} for r in results])
 
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()  # Regenerate the database schema with new fields
-    app.run(debug=True)
 
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
     return redirect('/login')
 
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()  # Regenerate the database schema with new fields
+    app.run(debug=True, host='0.0.0.0',  port=5050)
 
 
 """
