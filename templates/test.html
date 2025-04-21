@@ -2,101 +2,252 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Vision Test Interface</title>
+    <title>Vision Test</title>
     <style>
       body {
-        text-align: center;
+        margin: 0;
         font-family: Arial, sans-serif;
-        background-color: rgb(59, 220, 248);
+        background-color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
       }
-      canvas {
-        border: 1px solid #ccc;
-        margin: 30px auto;
+
+      .test-container {
+        display: flex;
+        align-items: center;
+        gap: 100px;
+        font-size: 28px;
+      }
+
+      #visionCanvas {
         display: block;
+        background: transparent;
+      }
+
+      .control-box {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background: #f0f0f0;
+        border-radius: 10px;
+        padding: 10px;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+      }
+
+      .control-box button {
+        font-size: 20px;
+        padding: 10px;
+        margin: 5px;
+        width: 50px;
+        height: 50px;
+        cursor: pointer;
+      }
+
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(5px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+      }
+
+      .modal {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      #retakeBtn {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        display: none;
       }
     </style>
   </head>
   <body>
-    <h1>EyecareLive Vision Test</h1>
-    <p>Look at the C below and tap the direction it opens on your phone.</p>
-    <canvas id="visionCanvas" width="300" height="300"></canvas>
-    <p id="status">Waiting for response...</p>
+    <div class="test-container">
+      <div id="acuityLabel">20/100</div>
+      <canvas id="visionCanvas" width="200" height="200"></canvas>
+      <div id="stepCounter">1</div>
+    </div>
 
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <!-- Modal overlay -->
+    <div id="overlay" class="overlay">
+      <div class="modal">
+        <p id="modalText">Cover your right eye with your hand.</p>
+        <button id="retakeBtn">Retake Test</button>
+      </div>
+    </div>
+
+    <!-- Temporary arrow controls -->
+    <div class="control-box">
+      <div style="text-align: center">
+        <button onclick="simulateAnswer('up')">↑</button><br />
+        <button onclick="simulateAnswer('left')">←</button>
+        <button onclick="simulateAnswer('down')">↓</button>
+        <button onclick="simulateAnswer('right')">→</button>
+        <button onclick="simulateAnswer('up-left')">↖</button>
+        <button onclick="simulateAnswer('up-right')">↗</button><br />
+        <button onclick="simulateAnswer('down-left')">↙</button>
+        <button onclick="simulateAnswer('down-right')">↘</button>
+      </div>
+    </div>
+
     <script>
-      const socket = io("http://localhost:5000"); // Adjust if hosted
-
       const canvas = document.getElementById("visionCanvas");
       const ctx = canvas.getContext("2d");
-      const status = document.getElementById("status");
+      const acuityLabel = document.getElementById("acuityLabel");
+      const stepCounter = document.getElementById("stepCounter");
 
-      // === Vision Test Sizes Table ===
+      const overlay = document.getElementById("overlay");
+      const modalText = document.getElementById("modalText");
+      const retakeBtn = document.getElementById("retakeBtn");
+
       const testSizes = [
-        { label: "20/15", size: 3.28, gap: 0.656 }, // mm at 3m
-        { label: "20/20", size: 4.375, gap: 0.875 },
-        { label: "20/30", size: 6.5625, gap: 1.31 },
-        { label: "20/40", size: 8.75, gap: 1.75 },
-        { label: "20/50", size: 13.125, gap: 2.19 },
-        { label: "20/60", size: 13.125, gap: 2.63 },
-        { label: "20/80", size: 17.5, gap: 3.5 },
         { label: "20/100", size: 21.875, gap: 4.38 },
+        { label: "20/80", size: 17.5, gap: 3.5 },
+        { label: "20/60", size: 13.125, gap: 2.63 },
+        { label: "20/50", size: 13.125, gap: 2.19 },
+        { label: "20/40", size: 8.75, gap: 1.75 },
+        { label: "20/30", size: 6.5625, gap: 1.31 },
+        { label: "20/20", size: 4.375, gap: 0.875 },
+        { label: "20/15", size: 3.28, gap: 0.656 },
       ];
 
-      let currentIndex = 0;
-      let currentDirection = "right";
-      let score = 0;
+      const directions = [
+        "up",
+        "right",
+        "down",
+        "left",
+        "up-right",
+        "down-right",
+        "down-left",
+        "up-left",
+      ];
 
-      const directions = ["up", "right", "down", "left"];
+      const angleDeg = {
+        up: 270,
+        right: 0,
+        down: 90,
+        left: 180,
+        "up-right": 315,
+        "down-right": 45,
+        "down-left": 135,
+        "up-left": 225,
+      };
+
+      let currentIndex = 0;
+      let currentDirection = "";
+      let score = 0;
+      let phase = 0;
+      let roundScores = [0, 0];
 
       function drawLandoltC(sizeMm, gapMm, direction) {
-        const pxPerMm = 3.78; // Assumed pixel density on standard display
-        const outerR = (sizeMm * pxPerMm) / 2;
-        const gap = gapMm * pxPerMm;
+        const pxPerMm = 3.78;
+        const outerRadius = (sizeMm * pxPerMm) / 2;
+        const gapThickness = gapMm * pxPerMm;
+
         const cx = canvas.width / 2;
         const cy = canvas.height / 2;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.beginPath();
-        ctx.arc(cx, cy, outerR, 0, 2 * Math.PI);
-        ctx.lineWidth = gap;
-        ctx.strokeStyle = "#000";
+        ctx.arc(cx, cy, outerRadius, 0, Math.PI * 2);
+        ctx.lineWidth = gapThickness;
+        ctx.strokeStyle = "black";
         ctx.stroke();
 
-        // Cover the gap (simulate opening)
         ctx.save();
-        ctx.beginPath();
-        let angle = { up: 270, right: 0, down: 90, left: 180 }[direction];
-        let rad = (angle * Math.PI) / 180;
         ctx.translate(cx, cy);
-        ctx.rotate(rad);
-        ctx.clearRect(-outerR - 5, -gap / 2, gap * 2, gap);
+        const angle = angleDeg[direction];
+        ctx.rotate((angle * Math.PI) / 180);
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.fillRect(
+          -outerRadius,
+          -gapThickness / 2,
+          gapThickness * 2,
+          gapThickness
+        );
         ctx.restore();
+        ctx.globalCompositeOperation = "source-over";
       }
 
-      function startTest() {
+      function runTest() {
+        overlay.style.display = "none";
+
         if (currentIndex >= testSizes.length) {
-          socket.emit("test_completed", { score });
-          status.innerText = `Test complete! Score: ${score}/${testSizes.length}`;
+          roundScores[phase] = score;
+          if (phase === 0) {
+            phase = 1;
+            currentIndex = 0;
+            score = 0;
+            showModal("Now cover your left eye with your hand", 5000, runTest);
+          } else {
+            showFinalModal();
+          }
           return;
         }
 
         const test = testSizes[currentIndex];
-        currentDirection = directions[Math.floor(Math.random() * 4)];
+        currentDirection =
+          directions[Math.floor(Math.random() * directions.length)];
+        acuityLabel.innerText = test.label;
+        stepCounter.innerText = currentIndex + 1;
         drawLandoltC(test.size, test.gap, currentDirection);
-        status.innerText = `Test ${currentIndex + 1}/${testSizes.length}`;
       }
 
-      socket.on("connect", () => {
-        console.log("Connected to server");
-        startTest();
-      });
-
-      socket.on("answer", (data) => {
-        const isCorrect = data.direction === currentDirection;
-        if (isCorrect) score++;
+      function simulateAnswer(dir) {
+        if (dir === currentDirection) {
+          score++;
+        }
         currentIndex++;
-        startTest();
-      });
+        runTest();
+      }
+
+      function showModal(text, delay, callback) {
+        overlay.style.display = "flex";
+        modalText.innerText = text;
+        retakeBtn.style.display = "none";
+        setTimeout(() => {
+          overlay.style.display = "none";
+          if (callback) callback();
+        }, delay);
+      }
+
+      function showFinalModal() {
+        const [score1, score2] = roundScores;
+        modalText.innerHTML = `
+        Test complete!<br><br>
+        👁️ Right Eye: ${score1}/${testSizes.length}<br>
+        👁️ Left Eye: ${score2}/${testSizes.length}
+      `;
+        retakeBtn.style.display = "inline-block";
+        overlay.style.display = "flex";
+      }
+
+      retakeBtn.onclick = () => {
+        currentIndex = 0;
+        phase = 0;
+        score = 0;
+        roundScores = [0, 0];
+        showModal("Cover your right eye with your hand", 5000, runTest);
+      };
+
+      // Start the sequence
+      showModal("Cover your right eye with your hand", 5000, runTest);
     </script>
   </body>
 </html>
