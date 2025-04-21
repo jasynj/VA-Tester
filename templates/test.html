@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vision Test Interface</title>
+    <style>
+      body {
+        text-align: center;
+        font-family: Arial, sans-serif;
+        background-color: rgb(59, 220, 248);
+      }
+      canvas {
+        border: 1px solid #ccc;
+        margin: 30px auto;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>EyecareLive Vision Test</h1>
+    <p>Look at the C below and tap the direction it opens on your phone.</p>
+    <canvas id="visionCanvas" width="300" height="300"></canvas>
+    <p id="status">Waiting for response...</p>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+      const socket = io("http://localhost:5000"); // Adjust if hosted
+
+      const canvas = document.getElementById("visionCanvas");
+      const ctx = canvas.getContext("2d");
+      const status = document.getElementById("status");
+
+      // === Vision Test Sizes Table ===
+      const testSizes = [
+        { label: "20/15", size: 3.28, gap: 0.656 }, // mm at 3m
+        { label: "20/20", size: 4.375, gap: 0.875 },
+        { label: "20/30", size: 6.5625, gap: 1.31 },
+        { label: "20/40", size: 8.75, gap: 1.75 },
+        { label: "20/50", size: 13.125, gap: 2.19 },
+        { label: "20/60", size: 13.125, gap: 2.63 },
+        { label: "20/80", size: 17.5, gap: 3.5 },
+        { label: "20/100", size: 21.875, gap: 4.38 },
+      ];
+
+      let currentIndex = 0;
+      let currentDirection = "right";
+      let score = 0;
+
+      const directions = ["up", "right", "down", "left"];
+
+      function drawLandoltC(sizeMm, gapMm, direction) {
+        const pxPerMm = 3.78; // Assumed pixel density on standard display
+        const outerR = (sizeMm * pxPerMm) / 2;
+        const gap = gapMm * pxPerMm;
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.arc(cx, cy, outerR, 0, 2 * Math.PI);
+        ctx.lineWidth = gap;
+        ctx.strokeStyle = "#000";
+        ctx.stroke();
+
+        // Cover the gap (simulate opening)
+        ctx.save();
+        ctx.beginPath();
+        let angle = { up: 270, right: 0, down: 90, left: 180 }[direction];
+        let rad = (angle * Math.PI) / 180;
+        ctx.translate(cx, cy);
+        ctx.rotate(rad);
+        ctx.clearRect(-outerR - 5, -gap / 2, gap * 2, gap);
+        ctx.restore();
+      }
+
+      function startTest() {
+        if (currentIndex >= testSizes.length) {
+          socket.emit("test_completed", { score });
+          status.innerText = `Test complete! Score: ${score}/${testSizes.length}`;
+          return;
+        }
+
+        const test = testSizes[currentIndex];
+        currentDirection = directions[Math.floor(Math.random() * 4)];
+        drawLandoltC(test.size, test.gap, currentDirection);
+        status.innerText = `Test ${currentIndex + 1}/${testSizes.length}`;
+      }
+
+      socket.on("connect", () => {
+        console.log("Connected to server");
+        startTest();
+      });
+
+      socket.on("answer", (data) => {
+        const isCorrect = data.direction === currentDirection;
+        if (isCorrect) score++;
+        currentIndex++;
+        startTest();
+      });
+    </script>
+  </body>
+</html>
