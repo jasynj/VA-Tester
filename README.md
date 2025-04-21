@@ -6,7 +6,7 @@ This is a lightweight web application inspired by the **EyecareLive Vision Test*
 
 ## 🌐 Live Demo (Optional)
 
-> Coming soon...
+> Coming soon on android only (for now)
 
 ---
 
