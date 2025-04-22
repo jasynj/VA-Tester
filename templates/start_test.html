@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Start Vision Test</title>
   <style>
     body {
       font-family: 'Poppins', sans-serif;
-      background:rgb(59, 220, 248);
+      background: rgb(59, 220, 248);
       padding: 2rem;
       text-align: center;
     }
@@ -28,59 +28,194 @@
       border-radius: 8px;
       font-size: 1rem;
       cursor: pointer;
+      margin: 0.5rem;
+    }
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
     }
   </style>
 </head>
 <body>
   <h1>Start Your Vision Test 👁️</h1>
   <p class="notice">
+    This test requires access to your device's motion sensors to track movement.<br>
     Please walk back approximately <strong>10 feet (3 meters)</strong> while holding your phone.<br>
-    We'll alert you when you've reached the correct distance.
+    We'll alert you when you're ready.
   </p>
 
-  <p class="status" id="status">Waiting for movement...</p>
-  <button onclick="startTracking()">Start</button>
+  <p class="status" id="status">Waiting for device permission...</p>
+  <button onclick="requestMotionPermission()">Start</button>
+  <button onclick="stopTracking()" id="cancelButton" style="display: none;">Cancel</button>
 
   <script>
     let totalDistance = 0;
-    let tracking = false;
-    let lastTimestamp = null;
     let velocity = 0;
+    let lastTimestamp = null;
+    let tracking = false;
+    let gravity = { x: 0, y: 0, z: 0 }; // Estimated gravity
+    let stepCount = 0;
+    let lastAccMagnitude = 0;
+    let lastStepTime = 0;
+    const STEP_THRESHOLD = 1.5; // Acceleration magnitude change for step detection
+    const STEP_MIN_INTERVAL = 300; // Min time between steps (ms)
+    const AVERAGE_STEP_LENGTH = 0.7; // Average step length in meters
 
-    function startTracking() {
-      if (!window.DeviceMotionEvent) {
-        alert("Your device does not support motion tracking.");
+    function requestMotionPermission() {
+      const status = document.getElementById("status");
+      const startButton = document.querySelector("button[onclick='requestMotionPermission()']");
+      const cancelButton = document.getElementById("cancelButton");
+
+      if (!window.isSecureContext) {
+        status.textContent = "⚠️ This feature requires a secure connection (HTTPS). For local testing, use 'localhost'.";
         return;
       }
 
-      tracking = true;
+      if (typeof DeviceMotionEvent === 'undefined') {
+        status.textContent = "⚠️ Device motion not supported on this device.";
+        return;
+      }
+
+      startButton.disabled = true;
+
+      if (typeof DeviceMotionEvent.requestPermission === 'function') {
+        DeviceMotionEvent.requestPermission()
+          .then(permissionState => {
+            if (permissionState === 'granted') {
+              status.textContent = "✅ Motion permission granted. Calibrating...";
+              calibrateGravity().then(() => {
+                status.textContent = "✅ Calibration done. Tracking...";
+                cancelButton.style.display = "inline-block";
+                startTracking();
+              });
+            } else {
+              status.textContent = "❌ Motion permission denied. Please enable it in settings or try again.";
+მოდ: true;
+              startButton.textContent = "Retry";
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            status.textContent = "⚠️ Error requesting motion permission.";
+          })
+          .finally(() => {
+            startButton.disabled = false;
+          });
+      } else {
+        status.textContent = "✅ Calibrating...";
+        calibrateGravity().then(() => {
+          status.textContent = "✅ Calibration done. Tracking...";
+          cancelButton.style.display = "inline-block";
+          startTracking();
+        });
+        startButton.disabled = false;
+      }
+    }
+
+    function calibrateGravity() {
+      return new Promise(resolve => {
+        let samples = 0;
+        let tempGravity = { x: 0, y: 0, z: 0 };
+        const calibrationHandler = event => {
+          const acc = event.accelerationIncludingGravity;
+          if (acc && acc.x !== null && acc.y !== null && acc.z !== null) {
+            tempGravity.x += acc.x;
+            tempGravity.y += acc.y;
+            tempGravity.z += acc.z;
+            samples++;
+            if (samples >= 50) { // Collect 50 samples (~1 second at 50Hz)
+              gravity.x = tempGravity.x / samples;
+              gravity.y = tempGravity.y / samples;
+              gravity.z = tempGravity.z / samples;
+              window.removeEventListener("devicemotion", calibrationHandler);
+              resolve();
+            }
+          }
+        };
+        window.addEventListener("devicemotion", calibrationHandler);
+      });
+    }
+
+    function startTracking() {
       totalDistance = 0;
       velocity = 0;
       lastTimestamp = null;
+      stepCount = 0;
+      lastAccMagnitude = 0;
+      lastStepTime = 0;
+      tracking = true;
+      window.addEventListener("devicemotion", handleMotion, true);
+    }
 
-      document.getElementById('status').textContent = "Tracking your movement...";
+    function handleMotion(event) {
+      if (!tracking) return;
 
-      window.addEventListener('devicemotion', (event) => {
-        if (!tracking) return;
+      const status = document.getElementById("status");
+      const acc = event.accelerationIncludingGravity;
+      const timestamp = event.timeStamp;
 
-        const acc = event.accelerationIncludingGravity.z;
-        const timestamp = event.timeStamp;
+      if (!acc || acc.x === null || acc.y === null || acc.z === null) {
+        status.textContent = "⚠️ No valid motion data available.";
+        stopTracking();
+        return;
+      }
 
-        if (lastTimestamp !== null && acc !== null) {
-          const dt = (timestamp - lastTimestamp) / 1000;
-          velocity += acc * dt;
-          const displacement = velocity * dt;
-          totalDistance += Math.abs(displacement);
+      // Remove gravity from acceleration
+      const linearAcc = {
+        x: acc.x - gravity.x,
+        y: acc.y - gravity.y,
+        z: acc.z - gravity.z,
+      };
+
+      // Calculate acceleration magnitude
+      const accMagnitude = Math.sqrt(
+        linearAcc.x * linearAcc.x +
+        linearAcc.y * linearAcc.y +
+        linearAcc.z * linearAcc.z
+      );
+
+      // Step detection
+      if (
+        Math.abs(accMagnitude - lastAccMagnitude) > STEP_THRESHOLD &&
+        timestamp - lastStepTime > STEP_MIN_INTERVAL
+      ) {
+        stepCount++;
+        lastStepTime = timestamp;
+        totalDistance = stepCount * AVERAGE_STEP_LENGTH;
+      }
+
+      // Update last values
+      lastAccMagnitude = accMagnitude;
+      lastTimestamp = timestamp;
+
+      // Check if target distance (3 meters) is reached
+      if (totalDistance >= 3.0) {
+        tracking = false;
+        status.textContent = "✅ Distance reached! Starting test...";
+
+        if (navigator.vibrate) {
+          try {
+            navigator.vibrate(500);
+          } catch (err) {
+            console.warn("Vibration not allowed or failed.");
+          }
         }
 
-        lastTimestamp = timestamp;
+        setTimeout(() => {
+          window.location.href = "/vision_test";
+        }, 1500);
+      } else {
+        status.textContent = `Tracking... Distance: ${totalDistance.toFixed(2)} m (${stepCount} steps)`;
+      }
+    }
 
-        if (totalDistance >= 3.0) { // approx 3 meters (10 feet)
-          tracking = false;
-          navigator.vibrate(500);
-          document.getElementById('status').textContent = "✅ Distance reached! Begin test.";
-        }
-      }, true);
+    function stopTracking() {
+      tracking = false;
+      window.removeEventListener("devicemotion", handleMotion);
+      const status = document.getElementById("status");
+      const cancelButton = document.getElementById("cancelButton");
+      status.textContent = "Tracking stopped.";
+      cancelButton.style.display = "none";
     }
   </script>
 </body>

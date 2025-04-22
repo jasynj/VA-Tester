@@ -229,14 +229,28 @@
 
       function showFinalModal() {
         const [score1, score2] = roundScores;
+        
+        // Send result to backend
+        fetch("/submit_score", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            right_eye: score1,
+            left_eye: score2
+          }),
+        });
+
         modalText.innerHTML = `
-        Test complete!<br><br>
-        👁️ Right Eye: ${score1}/${testSizes.length}<br>
-        👁️ Left Eye: ${score2}/${testSizes.length}
-      `;
+          Test complete!<br><br>
+          👁️ Right Eye: ${score1}/${testSizes.length}<br>
+          👁️ Left Eye: ${score2}/${testSizes.length}
+        `;
         retakeBtn.style.display = "inline-block";
         overlay.style.display = "flex";
       }
+      
 
       retakeBtn.onclick = () => {
         currentIndex = 0;
