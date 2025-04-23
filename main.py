@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify, session, render_template, redirect, url_for, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -10,8 +11,8 @@ import io
 import re
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vision_test.db'
+app.secret_key = os.getenv('SECRET_KEY', 'fallback-secret')  # fallback is optional
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///vision_test.db')
 db = SQLAlchemy(app)
 CORS(app, supports_credentials=True)
 
