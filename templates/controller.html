@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vision Test Controller</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f8f8;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    h2 {
+      color: #333;
+    }
+
+    .control-box {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 1rem;
+    }
+
+    .control-box button {
+      font-size: 24px;
+      padding: 20px;
+      width: 70px;
+      height: 70px;
+      cursor: pointer;
+      border-radius: 12px;
+      border: 2px solid #333;
+      background-color: #fff;
+    }
+
+    .control-box button:hover {
+      background-color: #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+  <h2>Use the controls below to answer</h2>
+
+  <div class="control-box">
+    <button onclick="sendAnswer('up')">↑</button>
+    <button onclick="sendAnswer('left')">←</button>
+    <button onclick="sendAnswer('down')">↓</button>
+    <button onclick="sendAnswer('right')">→</button>
+    <button onclick="sendAnswer('up-left')">↖</button>
+    <button onclick="sendAnswer('up-right')">↗</button>
+    <button onclick="sendAnswer('down-left')">↙</button>
+    <button onclick="sendAnswer('down-right')">↘</button>
+  </div>
+
+  <script>
+    const token = new URLSearchParams(window.location.search).get("token");
+
+    function sendAnswer(direction) {
+      fetch("/submit_direction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, direction }),
+      });
+    }
+  </script>
+</body>
+</html>

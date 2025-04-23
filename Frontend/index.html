@@ -34,43 +34,50 @@
       background: #666;
       cursor: not-allowed;
     }
+    .debug {
+      font-size: 0.9rem;
+      color: #333;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 <body>
   <h1>Start Your Vision Test 👁️</h1>
   <p class="notice">
-    This test requires access to your device's motion sensors to track movement.<br>
-    Please walk back approximately <strong>10 feet (3 meters)</strong> while holding your phone.<br>
+    Hold your phone steady and walk back approximately <strong>10 feet (3 meters)</strong> in a straight line.<br>
     We'll alert you when you're ready.
   </p>
 
   <p class="status" id="status">Waiting for device permission...</p>
   <button onclick="requestMotionPermission()">Start</button>
   <button onclick="stopTracking()" id="cancelButton" style="display: none;">Cancel</button>
+  <button onclick="forceStep()" id="forceStepButton" style="display: none;">Force Step (Debug)</button>
+  <p class="debug" id="debug">Debug: Waiting...</p>
 
   <script>
     let totalDistance = 0;
-    let velocity = 0;
+    let stepCount = 0;
     let lastTimestamp = null;
     let tracking = false;
     let gravity = { x: 0, y: 0, z: 0 };
-    let stepCount = 0;
     let lastAccMagnitude = 0;
     let lastStepTime = 0;
-
-    const STEP_THRESHOLD = 1.5;
-    const STEP_MIN_INTERVAL = 300;
-    const AVERAGE_STEP_LENGTH = 0.7;
-
-    const token = new URLSearchParams(window.location.search).get("token");
+    let isAboveThreshold = false;
+    const TARGET_DISTANCE = 3.0; // 3 meters
+    const STEP_THRESHOLD = 0.3; // Lowered threshold for step detection
+    const STEP_MIN_INTERVAL = 200; // Min time between steps (ms)
+    const AVERAGE_STEP_LENGTH = 0.7; // Step length in meters
+    const LOW_PASS_ALPHA = 0.6; // Less aggressive filter
 
     function requestMotionPermission() {
       const status = document.getElementById("status");
+      const debug = document.getElementById("debug");
       const startButton = document.querySelector("button[onclick='requestMotionPermission()']");
       const cancelButton = document.getElementById("cancelButton");
+      const forceStepButton = document.getElementById("forceStepButton");
 
       if (!window.isSecureContext) {
-        status.textContent = "⚠️ This feature requires a secure connection (HTTPS). For local testing, use 'localhost'.";
+        status.textContent = "⚠️ This feature requires a secure connection (HTTPS).";
         return;
       }
 
@@ -86,9 +93,11 @@
           .then(permissionState => {
             if (permissionState === 'granted') {
               status.textContent = "✅ Motion permission granted. Calibrating...";
+              debug.textContent = "Debug: Calibrating gravity...";
               calibrateGravity().then(() => {
                 status.textContent = "✅ Calibration done. Tracking...";
                 cancelButton.style.display = "inline-block";
+                forceStepButton.style.display = "inline-block";
                 startTracking();
               });
             } else {
@@ -105,9 +114,11 @@
           });
       } else {
         status.textContent = "✅ Calibrating...";
+        debug.textContent = "Debug: Calibrating gravity...";
         calibrateGravity().then(() => {
           status.textContent = "✅ Calibration done. Tracking...";
           cancelButton.style.display = "inline-block";
+          forceStepButton.style.display = "inline-block";
           startTracking();
         });
         startButton.disabled = false;
@@ -129,6 +140,7 @@
               gravity.x = tempGravity.x / samples;
               gravity.y = tempGravity.y / samples;
               gravity.z = tempGravity.z / samples;
+              console.log("Gravity calibrated:", gravity);
               window.removeEventListener("devicemotion", calibrationHandler);
               resolve();
             }
@@ -140,11 +152,11 @@
 
     function startTracking() {
       totalDistance = 0;
-      velocity = 0;
-      lastTimestamp = null;
       stepCount = 0;
+      lastTimestamp = null;
       lastAccMagnitude = 0;
       lastStepTime = 0;
+      isAboveThreshold = false;
       tracking = true;
       window.addEventListener("devicemotion", handleMotion, true);
     }
@@ -153,6 +165,7 @@
       if (!tracking) return;
 
       const status = document.getElementById("status");
+      const debug = document.getElementById("debug");
       const acc = event.accelerationIncludingGravity;
       const timestamp = event.timeStamp;
 
@@ -162,31 +175,48 @@
         return;
       }
 
+      // Remove gravity
       const linearAcc = {
         x: acc.x - gravity.x,
         y: acc.y - gravity.y,
         z: acc.z - gravity.z,
       };
 
-      const accMagnitude = Math.sqrt(
-        linearAcc.x ** 2 + linearAcc.y ** 2 + linearAcc.z ** 2
+      // Calculate acceleration magnitude
+      let accMagnitude = Math.sqrt(
+        linearAcc.x * linearAcc.x +
+        linearAcc.y * linearAcc.y +
+        linearAcc.z * linearAcc.z
       );
 
-      if (
-        Math.abs(accMagnitude - lastAccMagnitude) > STEP_THRESHOLD &&
-        timestamp - lastStepTime > STEP_MIN_INTERVAL
-      ) {
-        stepCount++;
-        lastStepTime = timestamp;
-        totalDistance = stepCount * AVERAGE_STEP_LENGTH;
+      // Apply low-pass filter
+      if (lastAccMagnitude !== 0) {
+        accMagnitude = LOW_PASS_ALPHA * accMagnitude + (1 - LOW_PASS_ALPHA) * lastAccMagnitude;
       }
 
+      // Step detection: Detect transition from above to below threshold
+      if (accMagnitude > STEP_THRESHOLD && !isAboveThreshold && timestamp - lastStepTime > STEP_MIN_INTERVAL) {
+        isAboveThreshold = true;
+      } else if (accMagnitude < STEP_THRESHOLD && isAboveThreshold) {
+        stepCount++;
+        totalDistance = stepCount * AVERAGE_STEP_LENGTH;
+        lastStepTime = timestamp;
+        isAboveThreshold = false;
+        console.log(`Step detected: ${stepCount}, Distance: ${totalDistance.toFixed(2)} m, Magnitude: ${accMagnitude.toFixed(2)}`);
+      }
+
+      // Update debug info
+      debug.textContent = `Debug: Steps: ${stepCount}, Raw Acc: ${Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z).toFixed(2)} m/s², Filtered: ${accMagnitude.toFixed(2)} m/s², Threshold: ${STEP_THRESHOLD.toFixed(2)}`;
+
+      // Update last values
       lastAccMagnitude = accMagnitude;
       lastTimestamp = timestamp;
 
-      if (totalDistance >= 3.0) {
+      // Check if target distance is reached
+      if (totalDistance >= TARGET_DISTANCE) {
         tracking = false;
         status.textContent = "✅ Distance reached! Starting test...";
+        debug.textContent = "Debug: Test complete.";
 
         if (navigator.vibrate) {
           try {
@@ -196,23 +226,35 @@
           }
         }
 
-        // Tell the server we’re ready, then go to controller
-        fetch(`/mark_ready/${token}`, { method: "POST" })
-          .then(() => {
-            setTimeout(() => {
-              window.location.href = `/controller?token=${token}`;
-            }, 1500);
-          });
+        setTimeout(() => {
+          window.location.href = "/vision_test";
+        }, 1500);
       } else {
         status.textContent = `Tracking... Distance: ${totalDistance.toFixed(2)} m (${stepCount} steps)`;
+      }
+    }
+
+    function forceStep() {
+      stepCount++;
+      totalDistance = stepCount * AVERAGE_STEP_LENGTH;
+      console.log(`Forced step: ${stepCount}, Distance: ${totalDistance.toFixed(2)} m`);
+      document.getElementById("status").textContent = `Tracking... Distance: ${totalDistance.toFixed(2)} m (${stepCount} steps)`;
+      if (totalDistance >= TARGET_DISTANCE) {
+        handleMotion({ timeStamp: Date.now() }); // Trigger completion check
       }
     }
 
     function stopTracking() {
       tracking = false;
       window.removeEventListener("devicemotion", handleMotion);
-      document.getElementById("status").textContent = "Tracking stopped.";
-      document.getElementById("cancelButton").style.display = "none";
+      const status = document.getElementById("status");
+      const debug = document.getElementById("debug");
+      const cancelButton = document.getElementById("cancelButton");
+      const forceStepButton = document.getElementById("forceStepButton");
+      status.textContent = "Tracking stopped.";
+      debug.textContent = "Debug: Tracking stopped.";
+      cancelButton.style.display = "none";
+      forceStepButton.style.display = "none";
     }
   </script>
 </body>
