@@ -53,13 +53,16 @@
     let velocity = 0;
     let lastTimestamp = null;
     let tracking = false;
-    let gravity = { x: 0, y: 0, z: 0 }; // Estimated gravity
+    let gravity = { x: 0, y: 0, z: 0 };
     let stepCount = 0;
     let lastAccMagnitude = 0;
     let lastStepTime = 0;
-    const STEP_THRESHOLD = 1.5; // Acceleration magnitude change for step detection
-    const STEP_MIN_INTERVAL = 300; // Min time between steps (ms)
-    const AVERAGE_STEP_LENGTH = 0.7; // Average step length in meters
+
+    const STEP_THRESHOLD = 1.5;
+    const STEP_MIN_INTERVAL = 300;
+    const AVERAGE_STEP_LENGTH = 0.7;
+
+    const token = new URLSearchParams(window.location.search).get("token");
 
     function requestMotionPermission() {
       const status = document.getElementById("status");
@@ -90,7 +93,6 @@
               });
             } else {
               status.textContent = "❌ Motion permission denied. Please enable it in settings or try again.";
-მოდ: true;
               startButton.textContent = "Retry";
             }
           })
@@ -123,7 +125,7 @@
             tempGravity.y += acc.y;
             tempGravity.z += acc.z;
             samples++;
-            if (samples >= 50) { // Collect 50 samples (~1 second at 50Hz)
+            if (samples >= 50) {
               gravity.x = tempGravity.x / samples;
               gravity.y = tempGravity.y / samples;
               gravity.z = tempGravity.z / samples;
@@ -160,21 +162,16 @@
         return;
       }
 
-      // Remove gravity from acceleration
       const linearAcc = {
         x: acc.x - gravity.x,
         y: acc.y - gravity.y,
         z: acc.z - gravity.z,
       };
 
-      // Calculate acceleration magnitude
       const accMagnitude = Math.sqrt(
-        linearAcc.x * linearAcc.x +
-        linearAcc.y * linearAcc.y +
-        linearAcc.z * linearAcc.z
+        linearAcc.x ** 2 + linearAcc.y ** 2 + linearAcc.z ** 2
       );
 
-      // Step detection
       if (
         Math.abs(accMagnitude - lastAccMagnitude) > STEP_THRESHOLD &&
         timestamp - lastStepTime > STEP_MIN_INTERVAL
@@ -184,11 +181,9 @@
         totalDistance = stepCount * AVERAGE_STEP_LENGTH;
       }
 
-      // Update last values
       lastAccMagnitude = accMagnitude;
       lastTimestamp = timestamp;
 
-      // Check if target distance (3 meters) is reached
       if (totalDistance >= 3.0) {
         tracking = false;
         status.textContent = "✅ Distance reached! Starting test...";
@@ -201,9 +196,13 @@
           }
         }
 
-        setTimeout(() => {
-          window.location.href = "/vision_test";
-        }, 1500);
+        // Tell the server we’re ready, then go to controller
+        fetch(`/mark_ready/${token}`, { method: "POST" })
+          .then(() => {
+            setTimeout(() => {
+              window.location.href = `/controller?token=${token}`;
+            }, 1500);
+          });
       } else {
         status.textContent = `Tracking... Distance: ${totalDistance.toFixed(2)} m (${stepCount} steps)`;
       }
@@ -212,10 +211,8 @@
     function stopTracking() {
       tracking = false;
       window.removeEventListener("devicemotion", handleMotion);
-      const status = document.getElementById("status");
-      const cancelButton = document.getElementById("cancelButton");
-      status.textContent = "Tracking stopped.";
-      cancelButton.style.display = "none";
+      document.getElementById("status").textContent = "Tracking stopped.";
+      document.getElementById("cancelButton").style.display = "none";
     }
   </script>
 </body>
