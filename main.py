@@ -13,8 +13,8 @@ import re
 app = Flask(__name__)
 @app.route('/')
 def home():
-    return 'EyecareLive Vision Test App is running!'
-    
+    return redirect('/login')
+
 app.secret_key = os.getenv('SECRET_KEY', 'fallback-secret')  # fallback is optional
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///vision_test.db')
 db = SQLAlchemy(app)

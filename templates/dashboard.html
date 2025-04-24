@@ -1,173 +1,178 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vision Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="dashboard.css">
-  <style>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vision Dashboard</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='dashboard.css') }}"
+    />
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+        background-color: rgb(12, 205, 239);
+        margin: 0;
+        padding: 0;
+        color: #333;
+      }
 
-body {
-    font-family: 'Poppins', sans-serif;
-    background-color:rgb(12, 205, 239);
-    margin: 0;
-    padding: 0;
-    color: #333;
-  }
-  
-  .top-bar {
-    background-color: #042c54;
-    color: white;
-    padding: 1rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .top-bar .logo {
-    font-weight: 600;
-    font-size: 1.2rem;
-  }
-  
-  .top-bar nav a {
-    color: white;
-    margin-left: 20px;
-    text-decoration: none;
-    font-weight: 500;
-  }
-  
-  .hero {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    background:rgb(28, 175, 183);
-    padding: 2rem;
-    align-items: center;
-  }
-  
-  .hero-text h1 {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .hero-text p {
-    font-size: 1rem;
-    margin-bottom: 1.5rem;
-  }
-  
-button {
-    padding: 0.75rem 1.5rem;
-    background-color: #042c54;
-    color: white;
-    border-radius: 5px;
-    text-decoration: none;
-    font-weight: 600;
-  }
-  
-  .hero-image img {
-    max-width: 400px;
-    border-radius: 10px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-  }
-  
-  .dashboard-cards {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-    padding: 2rem;
-  }
-  
-  .card {
-    background: rgb(206, 251, 248);
-    flex: 1;
-    min-width: 280px;
-    padding: 1.5rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-  }
-  
-  .card h2 {
-    margin-top: 0;
-    color: #042c54;
-  }
-  
-  .card ul {
-    padding-left: 1.2rem;
-  }
-  
-  footer {
-    text-align: center;
-    padding: 1rem;
-    font-size: 0.85rem;
-    background: #042c54;
-    color: white;
-  }
-  
+      .top-bar {
+        background-color: #042c54;
+        color: white;
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-  </style>
-</head>
-<body>
-  <header class="top-bar">
-    <div class="logo">👁️ VisionCare</div>
-    <nav>
-      <a href="/dashboard">Dashboard</a>
-      <a href="/start-test">Take Test</a>
-      <a href="/logout">Logout</a>
-    </nav>
-  </header>
+      .top-bar .logo {
+        font-weight: 600;
+        font-size: 1.2rem;
+      }
 
-  <section class="hero">
-    <div class="hero-text">
+      .top-bar nav a {
+        color: white;
+        margin-left: 20px;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .hero {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        background: rgb(28, 175, 183);
+        padding: 2rem;
+        align-items: center;
+      }
+
+      .hero-text h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .hero-text p {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      button {
+        padding: 0.75rem 1.5rem;
+        background-color: #042c54;
+        color: white;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .hero-image img {
+        max-width: 400px;
+        border-radius: 10px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      }
+
+      .dashboard-cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        padding: 2rem;
+      }
+
+      .card {
+        background: rgb(206, 251, 248);
+        flex: 1;
+        min-width: 280px;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      }
+
+      .card h2 {
+        margin-top: 0;
+        color: #042c54;
+      }
+
+      .card ul {
+        padding-left: 1.2rem;
+      }
+
+      footer {
+        text-align: center;
+        padding: 1rem;
+        font-size: 0.85rem;
+        background: #042c54;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top-bar">
+      <div class="logo">👁️ VisionCare</div>
+      <nav>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/start-test">Take Test</a>
+        <a href="/logout">Logout</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="hero-text">
         <h1>Welcome, {{ user.first_name }}</h1>
         <p>Ready to check your vision today?</p>
         <button onclick="showQR()">Start New Vision Test</button>
-        <img id="qr-code" style="margin-top: 1rem; display: none;" width="200" />
-    </div>
-    <div class="hero-image">
-      <img src="https://images.unsplash.com/photo-1588776814546-cf1e6f24a28e?auto=format&fit=crop&w=800&q=80" alt="Eye Care" />
-    </div>
-  </section>
+        <img id="qr-code" style="margin-top: 1rem; display: none" width="200" />
+      </div>
+      <div class="hero-image">
+        <img
+          src="https://images.unsplash.com/photo-1588776814546-cf1e6f24a28e?auto=format&fit=crop&w=800&q=80"
+          alt="Eye Care"
+        />
+      </div>
+    </section>
 
-  <section class="dashboard-cards">
-    <div class="card">
-      <h2>🧪 Your Test History</h2>
-      {% if test_results %}
+    <section class="dashboard-cards">
+      <div class="card">
+        <h2>🧪 Your Test History</h2>
+        {% if test_results %}
         <ul>
           {% for result in test_results %}
-            <li><strong>{{ result.date }}</strong> — {{ result.result }}</li>
+          <li><strong>{{ result.date }}</strong> — {{ result.result }}</li>
           {% endfor %}
         </ul>
-      {% else %}
+        {% else %}
         <p>No vision tests yet. Start your first one now!</p>
-      {% endif %}
-    </div>
+        {% endif %}
+      </div>
 
-    <div class="card">
-      <h2>👁 Recommendations</h2>
-      {% if recommendations %}
+      <div class="card">
+        <h2>👁 Recommendations</h2>
+        {% if recommendations %}
         <ul>
           {% for tip in recommendations %}
-            <li>{{ tip }}</li>
+          <li>{{ tip }}</li>
           {% endfor %}
         </ul>
-      {% else %}
+        {% else %}
         <p>No recommendations yet. Take a test to get feedback!</p>
-      {% endif %}
-    </div>
-  </section>
+        {% endif %}
+      </div>
+    </section>
 
-  <footer>
-    <p>&copy; 2025 VisionCare | Helping you see better, every day.</p>
-  </footer>
+    <footer>
+      <p>&copy; 2025 VisionCare | Helping you see better, every day.</p>
+    </footer>
 
-  <script>
-    function showQR() {
-      const img = document.getElementById("qr-code");
-      img.src = "/generate_qr";
-      img.style.display = "block";
-    }
-  </script>
-  
-</body>
+    <script>
+      function showQR() {
+        const img = document.getElementById("qr-code");
+        img.src = "/generate_qr";
+        img.style.display = "block";
+      }
+    </script>
+  </body>
 </html>
