@@ -116,7 +116,8 @@ def dashboard():
         for r in results
     ]
 
-    # Optional: Recommend only based on latest result
+    session_ready[user.user_uuid] = False
+
     recommendations = []
     if results:
         latest = results[0]
@@ -131,7 +132,14 @@ def dashboard():
         if not recommendations:
             recommendations.append("Monitor your vision and retake the test in 1 month.")
 
-    return render_template("dashboard.html", user=user, test_results=test_results, recommendations=recommendations)
+    return render_template(
+        "dashboard.html",
+        user=user,
+        test_results=test_results,
+        recommendations=recommendations,
+        token=user.user_uuid  
+    )
+
 
 
 

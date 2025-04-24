@@ -168,6 +168,24 @@
     </footer>
 
     <script>
+      const token = "{{ token }}"; // Make sure you're passing the user's token (UUID) to the page
+
+      function checkIfReady() {
+        fetch(`/check_ready/${token}`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.ready) {
+              window.location.href = `/test-display?token=${token}`; // ✅ Redirect to test-display page when ready
+            } else {
+              setTimeout(checkIfReady, 2000); // Check again after 2 seconds
+            }
+          })
+          .catch((err) => console.error("Error checking readiness:", err));
+      }
+
+      // Start checking as soon as the page loads:
+      checkIfReady();
+
       function showQR() {
         const img = document.getElementById("qr-code");
         img.src = "/generate_qr";
