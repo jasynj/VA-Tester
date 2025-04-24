@@ -141,7 +141,8 @@ def generate_qr():
         return redirect('/login')
 
     user = User.query.get(session['user_id'])
-    test_url = f"http://11.28.7.179:5050/start-test?token={user.user_uuid}"
+    test_url = url_for('start_test', token=user.user_uuid, _external=True)
+
 
     qr = qrcode.make(test_url)
     buffer = io.BytesIO()
