@@ -9,7 +9,7 @@ This project was developed as a group assignment to apply full-stack web develop
 
 ## 🌐 Live Demo (Optional)
 
-> **Coming soon on Android only (for now).**
+[> **🔗 Live Demo — Test Your Vision Now **](https://va-tester-b127.onrender.com)
 
 ---
 
