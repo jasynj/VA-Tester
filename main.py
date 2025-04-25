@@ -10,6 +10,7 @@ import qrcode
 import io
 import re
 
+
 app = Flask(__name__)
 @app.route('/')
 def home():
@@ -23,6 +24,7 @@ CORS(app, supports_credentials=True)
 # ==================== IN-MEMORY SYNC STATE ====================
 session_ready = {}
 latest_directions = defaultdict(lambda: None)
+finished_tests = {}
 
 # ==================== MODELS ====================
 class User(db.Model):
@@ -141,8 +143,6 @@ def dashboard():
     )
 
 
-
-
 @app.route('/generate_qr')
 def generate_qr():
     if 'user_id' not in session:
@@ -172,6 +172,11 @@ def start_test():
                 return "Invalid token", 403
         else:
             return redirect('/login')
+    
+    # >>> Reset finished test if scanning again <<<
+    if token in finished_tests:
+        del finished_tests[token]
+
     return render_template("start_test.html")
 
 
@@ -195,7 +200,25 @@ def submit_score():
     )
     db.session.add(result)
     db.session.commit()
+
+    # Mark test as finished for controller
+    token = User.query.get(session['user_id']).user_uuid
+    finished_tests[token] = {
+        'right_eye': data['right_eye'],
+        'left_eye': data['left_eye']
+    }
+
     return jsonify({'message': 'Result saved'})
+
+@app.route('/check_finished/<token>')
+def check_finished(token):
+    if token in finished_tests:
+        return jsonify({
+            'finished': True,
+            'right_eye': finished_tests[token]['right_eye'],
+            'left_eye': finished_tests[token]['left_eye']
+        })
+    return jsonify({'finished': False})
 
 
 @app.route('/my_results', methods=['GET'])
