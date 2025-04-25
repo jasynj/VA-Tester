@@ -135,6 +135,7 @@
       status.textContent = `Question ${currentIndex + 1} | Phase ${phase + 1}`;
     }
 
+
     function finishTest() {
       const [right, left] = roundScores;
 
@@ -143,6 +144,7 @@
         ✅ Test complete!<br><br>
         Right Eye: ${right}/${testSizes.length}<br>
         Left Eye: ${left}/${testSizes.length}
+        <br><br>Redirecting to your dashboard...
       `;
       overlay.style.display = "flex";
 
@@ -153,6 +155,10 @@
           right_eye: right,
           left_eye: left,
         }),
+      }).then(() => {
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 5000); // 5 second delay so they can see their score first
       });
     }
 
@@ -161,9 +167,13 @@
         .then(res => res.json())
         .then(data => {
           const dir = data.direction;
-          if (!dir) return;
+          if (!dir) return; // No input yet, so don't move to next question
 
-          if (dir === currentDirection) score++;
+          if (dir === currentDirection) {
+            score++; // Correct input => increase score
+          }
+          
+          // Move to next question whether correct or wrong
           currentIndex++;
           drawNext();
         });
@@ -194,3 +204,160 @@
   </script>
 </body>
 </html>
+
+
+/*
+    const token = new URLSearchParams(window.location.search).get("token");
+    const canvas = document.getElementById("visionCanvas");
+    const ctx = canvas.getContext("2d");
+    const overlay = document.getElementById("overlay");
+    const modalText = document.getElementById("modalText");
+    const status = document.getElementById("status");
+    const debugDirection = document.getElementById("debugDirection");
+
+    const testSizes = [
+      { label: "20/100", size: 21.875, gap: 4.38 },
+      { label: "20/80", size: 17.5, gap: 3.5 },
+      { label: "20/60", size: 13.125, gap: 2.63 },
+      { label: "20/50", size: 13.125, gap: 2.19 },
+      { labelzen: 8.75, gap: 1.75 },
+      { label: "20/30", size: 6.5625, gap: 1.31 },
+      { label: "20/20", size: 4.375, gap: 0.875 },
+      { label: "20/15", size: 3.28, gap: 0.656 },
+    ];
+
+    const directions = ["up", "right", "down", "left", "up-right", "down-right", "down-left", "up-left"];
+    const angleDeg = {
+      up: 90,        // Gap points up (90° in canvas coords)
+      right: 0,      // Gap points right
+      down: 270,     // Gap points down
+      left: 180,     // Gap points left
+      "up-right": 45,    // Gap points up-right
+      "down-right": 315, // Gap points down-right
+      "down-left": 225,  // Gap points down-left
+      "up-left": 135,    // Gap points up-left
+    };
+
+    let currentIndex = 0;
+    let currentDirection = "";
+    let phase = 0;
+    let score = 0;
+    let roundScores = [0, 0];
+
+    function drawLandoltC(sizeMm, gapMm, direction) {
+      const pxPerMm = 3.78;
+      const outerRadius = (sizeMm * pxPerMm) / 2;
+      const gapThickness = gapMm * pxPerMm;
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerRadius, 0, Math.PI * 2);
+      ctx.lineWidth = gapThickness;
+      ctx.strokeStyle = "black";
+      ctx.stroke();
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      const angle = angleDeg[direction];
+      ctx.rotate((angle * Math.PI) / 180);
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.fillRect(0, -gapThickness / 2, outerRadius, gapThickness);
+      ctx.restore();
+      ctx.globalCompositeOperation = "source-over";
+
+      console.log(`Drawing Landolt C: Direction = ${direction}, Angle = ${angle}°`);
+      debugDirection.textContent = `Expected Direction: ${direction}`;
+    }
+
+    function drawNext() {
+      if (currentIndex >= testSizes.length) {
+        roundScores[phase] = score;
+        console.log(`Phase ${phase + 1} completed. Score: ${score}/${testSizes.length}`);
+        if (phase === 0) {
+          phase = 1;
+          currentIndex = 0;
+          score = 0;
+          modalText.textContent = "Now cover your left eye 👁️";
+          overlay.style.display = "flex";
+          setTimeout(() => {
+            overlay.style.display = "none";
+            drawNext();
+          }, 4000);
+        } else {
+          finishTest();
+        }
+        return;
+      }
+
+      const test = testSizes[currentIndex];
+      currentDirection = directions[Math.floor(Math.random() * directions.length)];
+      drawLandoltC(test.size, test.gap, currentDirection);
+      status.textContent = `Question ${currentIndex + 1} | Phase ${phase + 1}`;
+    }
+
+    function finishTest() {
+      const [right, left] = roundScores;
+      console.log(`Final Scores - Right: ${right}/${testSizes.length}, Left: ${left}/${testSizes.length}`);
+
+      status.textContent = `🎯 Right: ${right}/${testSizes.length}, Left: ${left}/${testSizes.length}`;
+      modalText.innerHTML = `
+        ✅ Test complete!<br><br>
+        Right Eye: ${right}/${testSizes.length}<br>
+        Left Eye: ${left}/${testSizes.length}
+      `;
+      overlay.style.display = "flex";
+
+      fetch("/submit_score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          right_eye: right,
+          left_eye: left,
+        }),
+      });
+    }
+
+    function pollDirection() {
+      fetch(`/get_direction?token=${token}`)
+        .then(res => res.json())
+        .then(data => {
+          const dir = data.direction;
+          if (!dir) return;
+
+          console.log(`User Input: ${dir}, Correct Direction: ${currentDirection}, Score Before: ${score}`);
+          if (dir === currentDirection) {
+            score++;
+            console.log(`Correct answer! Score incremented to: ${score}`);
+          } else {
+            console.log(`Incorrect answer. Score remains: ${score}`);
+          }
+          currentIndex++;
+          drawNext();
+        })
+        .catch(err => console.error('Error polling direction:', err));
+    }
+
+    function waitForReady() {
+      fetch(`/check_ready/${token}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.ready) {
+            overlay.style.display = "flex";
+            modalText.textContent = "Cover your right eye 👁️";
+            setTimeout(() => {
+              overlay.style.display = "none";
+              currentIndex = 0;
+              score = 0;
+              drawNext();
+              setInterval(pollDirection, 1000);
+            }, 4000);
+          } else {
+            setTimeout(waitForReady, 1000);
+          }
+        });
+    }
+
+    waitForReady();
+*/
