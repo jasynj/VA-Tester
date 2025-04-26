@@ -9,7 +9,7 @@ This project was developed as a group assignment to apply full-stack web develop
 
 ## 🌐 Live Demo (Optional)
 
-[> **🔗 Live Demo — Test Your Vision Now **](https://va-tester-b127.onrender.com)
+[🔗 Live Demo — Test Your Vision Now ](https://va-tester-b127.onrender.com)
 
 ---
 
