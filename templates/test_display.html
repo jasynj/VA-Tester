@@ -57,6 +57,8 @@
     <div id="status">...</div>
 
     <script>
+      let pollInterval = null;
+
       const token = new URLSearchParams(window.location.search).get("token");
       const canvas = document.getElementById("visionCanvas");
       const ctx = canvas.getContext("2d");
@@ -132,11 +134,10 @@
 
       function drawNext() {
         if (currentIndex >= testSizes.length) {
-          roundScores[phase] = score;
           if (phase === 0) {
             phase = 1;
             currentIndex = 0;
-            score = 0;
+
             modalText.textContent = "Now cover your left eye 👁️";
             overlay.style.display = "flex";
             setTimeout(() => {
@@ -189,15 +190,35 @@
           .then((res) => res.json())
           .then((data) => {
             const dir = data.direction;
-            if (!dir) return; // No input yet, so don't move to next question
+            if (!dir) return; // No input yet
+
+            console.log(`Expected: ${currentDirection}, Got: ${dir}`);
 
             if (dir === currentDirection) {
-              score++; // Correct input => increase score
+              roundScores[phase] += 1;
             }
 
-            // Move to next question whether correct or wrong
             currentIndex++;
-            drawNext();
+
+            if (currentIndex >= testSizes.length) {
+              clearInterval(pollInterval);
+              if (phase === 0) {
+                phase = 1;
+                currentIndex = 0;
+
+                modalText.textContent = "Now cover your left eye 👁️";
+                overlay.style.display = "flex";
+                setTimeout(() => {
+                  overlay.style.display = "none";
+                  drawNext();
+                  pollInterval = setInterval(pollDirection, 1000); // restart interval
+                }, 4000);
+              } else {
+                finishTest();
+              }
+            } else {
+              drawNext();
+            }
           });
       }
 
@@ -211,9 +232,10 @@
               setTimeout(() => {
                 overlay.style.display = "none";
                 currentIndex = 0;
-                score = 0;
+                phase = 0;
+                roundScores = [0, 0];
                 drawNext();
-                setInterval(pollDirection, 1000);
+                pollInterval = setInterval(pollDirection, 1000);
               }, 4000);
             } else {
               setTimeout(waitForReady, 1000);
@@ -221,7 +243,6 @@
           });
       }
 
-      let score = 0;
       waitForReady();
     </script>
   </body>
