@@ -225,13 +225,33 @@ def submit_score():
 
 @app.route('/check_finished/<token>')
 def check_finished(token):
+    def calculate_visual_acuity(score, max_score=8):
+        acuity_scale = {
+            8: "20/20",
+            7: "20/25",
+            6: "20/30",
+            5: "20/40",
+            4: "20/50",
+            3: "20/60",
+            2: "20/80",
+            1: "20/100",
+            0: "worse than 20/100"
+        }
+        return acuity_scale.get(score, "Unknown")
+
     if token in finished_tests:
+        right_score = finished_tests[token]['right_eye']
+        left_score = finished_tests[token]['left_eye']
+
         return jsonify({
             'finished': True,
-            'right_eye': finished_tests[token]['right_eye'],
-            'left_eye': finished_tests[token]['left_eye']
+            'right_eye': right_score,
+            'left_eye': left_score,
+            'right_acuity': calculate_visual_acuity(right_score),
+            'left_acuity': calculate_visual_acuity(left_score)
         })
     return jsonify({'finished': False})
+
 
 
 @app.route('/my_results', methods=['GET'])

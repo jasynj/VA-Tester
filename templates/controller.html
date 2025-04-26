@@ -111,8 +111,8 @@
             if (data.finished) {
               document.body.innerHTML = `
               <h2>Test Completed ✅</h2>
-              <p>Right Eye: ${data.right_eye}/8</p>
-              <p>Left Eye: ${data.left_eye}/8</p>
+              <p>Right Eye: ${data.right_eye}/8 (${data.right_acuity})</p>
+              <p>Left Eye: ${data.left_eye}/8 (${data.left_acuity})</p>
             `;
             } else {
               setTimeout(checkIfTestFinished, 1000);
