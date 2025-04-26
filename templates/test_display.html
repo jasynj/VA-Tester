@@ -58,6 +58,7 @@
 
     <script>
       let pollInterval = null;
+      let awaitingResponse = false;
 
       const token = new URLSearchParams(window.location.search).get("token");
       const canvas = document.getElementById("visionCanvas");
@@ -142,7 +143,9 @@
             overlay.style.display = "flex";
             setTimeout(() => {
               overlay.style.display = "none";
+              awaitingResponse = false;
               drawNext();
+              pollInterval = setInterval(pollDirection, 1000);
             }, 4000);
           } else {
             finishTest();
@@ -164,11 +167,10 @@
 
         status.textContent = `🎯 Right: ${right}/${testSizes.length}, Left: ${left}/${testSizes.length}`;
         modalText.innerHTML = `
-        ✅ Test complete!<br><br>
-        Right Eye: ${right}/${testSizes.length}<br>
-        Left Eye: ${left}/${testSizes.length}
-        <br><br>Redirecting to your dashboard...
-      `;
+          ✅ Test complete!<br><br>
+          Right Eye: ${right}/${testSizes.length}<br>
+          Left Eye: ${left}/${testSizes.length}
+          <br><br>Redirecting to your dashboard...`;
         overlay.style.display = "flex";
 
         fetch("/submit_score", {
@@ -181,34 +183,29 @@
         }).then(() => {
           setTimeout(() => {
             window.location.href = "/dashboard";
-          }, 5000); // 5 second delay so they can see their score first
+          }, 5000);
         });
       }
 
-      let awaitingResponse = false;
-
       function pollDirection() {
-        if (awaitingResponse) return; // Prevent double polling
-        awaitingResponse = true;
+        if (awaitingResponse) return;
 
         fetch(`/get_direction?token=${token}`)
           .then((res) => res.json())
           .then((data) => {
             const dir = data.direction;
-            if (!dir) {
-              awaitingResponse = false; // Release the lock if no input yet
-              return;
-            }
+            if (!dir) return;
 
+            awaitingResponse = true;
             console.log(`Expected: ${currentDirection}, Got: ${dir}`);
 
             if (dir === currentDirection) {
               roundScores[phase] += 1;
-              console.log(`✅ Correct! Score: ${roundScores[phase]}`);
+              console.log(`✅ Correct! Score is now: ${roundScores[phase]}`);
             } else if (dir === "skip") {
-              console.log(`⚠️ Skipped. Counted as incorrect.`);
+              console.log("⚠️ Skipped. Counted as incorrect.");
             } else {
-              console.log(`❌ Incorrect.`);
+              console.log("❌ Incorrect.");
             }
 
             currentIndex++;
@@ -218,7 +215,6 @@
               if (phase === 0) {
                 phase = 1;
                 currentIndex = 0;
-
                 modalText.textContent = "Now cover your left eye 👁️";
                 overlay.style.display = "flex";
                 setTimeout(() => {
