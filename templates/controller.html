@@ -1,106 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Vision Test Controller</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f8f8f8;
-      text-align: center;
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vision Test Controller</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f8f8;
+        text-align: center;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
 
-    h2 {
-      color: #333;
-      margin-bottom: 2rem;
-    }
+      h2 {
+        color: #333;
+        margin-bottom: 2rem;
+      }
 
-    .control-box {
-      display: grid;
-      grid-template-columns: repeat(3, 120px);
-      grid-template-rows: repeat(3, 120px);
-      gap: 20px;
-      justify-content: center;
-      align-items: center;
-    }
+      .control-box {
+        display: grid;
+        grid-template-columns: repeat(3, 120px);
+        grid-template-rows: repeat(3, 120px);
+        gap: 20px;
+        justify-content: center;
+        align-items: center;
+      }
 
-    .control-box button {
-      font-size: 28px;
-      width: 100%;
-      height: 100%;
-      cursor: pointer;
-      border-radius: 20px;
-      border: 3px solid #333;
-      background-color: #fff;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      transition: transform 0.2s, background-color 0.2s;
-    }
+      .control-box button {
+        font-size: 28px;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        border-radius: 20px;
+        border: 3px solid #333;
+        background-color: #fff;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s, background-color 0.2s;
+      }
 
-    .control-box button:hover {
-      background-color: #e0e0e0;
-      transform: scale(1.05);
-    }
+      .control-box button:hover {
+        background-color: #e0e0e0;
+        transform: scale(1.05);
+      }
 
-    /* Make center empty */
-    .empty {
-      background: none;
-      border: none;
-      box-shadow: none;
-      cursor: default;
-    }
-  </style>
-</head>
-<body>
-  <h2>Use the controls below to answer</h2>
+      /* Make center empty */
+      .empty {
+        background: none;
+        border: none;
+        box-shadow: none;
+        cursor: default;
+      }
 
-  <div class="control-box">
-    <button onclick="sendAnswer('up-left')">↖</button>
-    <button onclick="sendAnswer('up')">↑</button>
-    <button onclick="sendAnswer('up-right')">↗</button>
+      .skip-button {
+        margin-top: 20px;
+        padding: 20px;
+        width: calc(70px * 3 + 20px * 2);
+        height: 70px;
+        font-size: 18px;
+        border-radius: 12px;
+        border: 2px solid #333;
+        background-color: #fff;
+        font-weight: bold;
+        cursor: pointer;
+      }
 
-    <button onclick="sendAnswer('left')">←</button>
-    <button class="empty"></button> <!-- center empty -->
-    <button onclick="sendAnswer('right')">→</button>
+      .skip-button:hover {
+        background-color: #e0e0e0;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Use the controls below to answer</h2>
 
-    <button onclick="sendAnswer('down-left')">↙</button>
-    <button onclick="sendAnswer('down')">↓</button>
-    <button onclick="sendAnswer('down-right')">↘</button>
-  </div>
+    <div class="control-box">
+      <button onclick="sendAnswer('up-left')">↖</button>
+      <button onclick="sendAnswer('up')">↑</button>
+      <button onclick="sendAnswer('up-right')">↗</button>
 
-  <script>
-    const token = new URLSearchParams(window.location.search).get("token");
-  
-    function sendAnswer(direction) {
-      fetch("/submit_direction", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, direction }),
-      });
-    }
-  
-    function checkIfTestFinished() {
-      fetch(`/check_finished/${token}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.finished) {
-            document.body.innerHTML = `
+      <button onclick="sendAnswer('left')">←</button>
+      <button class="empty"></button>
+      <!-- center empty -->
+      <button onclick="sendAnswer('right')">→</button>
+
+      <button onclick="sendAnswer('down-left')">↙</button>
+      <button onclick="sendAnswer('down')">↓</button>
+      <button onclick="sendAnswer('down-right')">↘</button>
+    </div>
+
+    <button class="skip-button" onclick="sendAnswer('skip')">SKIP</button>
+
+    <script>
+      const token = new URLSearchParams(window.location.search).get("token");
+
+      function sendAnswer(direction) {
+        fetch("/submit_direction", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, direction }),
+        });
+      }
+
+      function checkIfTestFinished() {
+        fetch(`/check_finished/${token}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.finished) {
+              document.body.innerHTML = `
               <h2>Test Completed ✅</h2>
               <p>Right Eye: ${data.right_eye}/8</p>
               <p>Left Eye: ${data.left_eye}/8</p>
             `;
-          } else {
-            setTimeout(checkIfTestFinished, 1000);
-          }
-        });
-    }
-  
-    checkIfTestFinished();
-  </script>
-</body>
+            } else {
+              setTimeout(checkIfTestFinished, 1000);
+            }
+          });
+      }
+
+      checkIfTestFinished();
+    </script>
+  </body>
 </html>
