@@ -185,17 +185,30 @@
         });
       }
 
+      let awaitingResponse = false;
+
       function pollDirection() {
+        if (awaitingResponse) return; // Prevent double polling
+        awaitingResponse = true;
+
         fetch(`/get_direction?token=${token}`)
           .then((res) => res.json())
           .then((data) => {
             const dir = data.direction;
-            if (!dir) return; // No input yet
+            if (!dir) {
+              awaitingResponse = false; // Release the lock if no input yet
+              return;
+            }
 
             console.log(`Expected: ${currentDirection}, Got: ${dir}`);
 
             if (dir === currentDirection) {
               roundScores[phase] += 1;
+              console.log(`✅ Correct! Score: ${roundScores[phase]}`);
+            } else if (dir === "skip") {
+              console.log(`⚠️ Skipped. Counted as incorrect.`);
+            } else {
+              console.log(`❌ Incorrect.`);
             }
 
             currentIndex++;
@@ -210,15 +223,21 @@
                 overlay.style.display = "flex";
                 setTimeout(() => {
                   overlay.style.display = "none";
+                  awaitingResponse = false;
                   drawNext();
-                  pollInterval = setInterval(pollDirection, 1000); // restart interval
+                  pollInterval = setInterval(pollDirection, 1000);
                 }, 4000);
               } else {
                 finishTest();
               }
             } else {
+              awaitingResponse = false;
               drawNext();
             }
+          })
+          .catch((err) => {
+            console.error("Error polling direction:", err);
+            awaitingResponse = false;
           });
       }
 
