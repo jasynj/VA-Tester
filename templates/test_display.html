@@ -166,11 +166,31 @@
         const [right, left] = roundScores;
 
         status.textContent = `🎯 Right: ${right}/${testSizes.length}, Left: ${left}/${testSizes.length}`;
+
+        function calculateAcuity(score) {
+          const acuityScale = {
+            8: "20/20",
+            7: "20/25",
+            6: "20/30",
+            5: "20/40",
+            4: "20/50",
+            3: "20/60",
+            2: "20/80",
+            1: "20/100",
+            0: "worse than 20/100",
+          };
+          return acuityScale[score] || "Unknown";
+        }
+
+        const rightAcuity = calculateAcuity(right);
+        const leftAcuity = calculateAcuity(left);
+
         modalText.innerHTML = `
-          ✅ Test complete!<br><br>
-          Right Eye: ${right}/${testSizes.length}<br>
-          Left Eye: ${left}/${testSizes.length}
-          <br><br>Redirecting to your dashboard...`;
+        ✅ Test complete!<br><br>
+        Right Eye: ${right}/${testSizes.length} (${rightAcuity})<br>
+        Left Eye: ${left}/${testSizes.length} (${leftAcuity})
+        <br><br>Redirecting to your dashboard...
+        `;
         overlay.style.display = "flex";
 
         fetch("/submit_score", {
