@@ -1,4 +1,4 @@
-# 👁️ EyecareLive Vision Test App
+# 👁️ VisionCare App
 
 This is a lightweight web application inspired by the EyecareLive Vision Test, designed to help users assess their visual acuity from home using a laptop or desktop paired with a smartphone. The application guides users through the testing process and allows them to securely save and view their test results.
 
